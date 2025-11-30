@@ -36,6 +36,7 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
       token,
       expiresAt: expirationDate.toISOString(),
       createdAt: new Date().toISOString(),
+      isActive: true,
       accessCount: 0,
     };
 
@@ -60,7 +61,7 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
     if (confirm("Are you sure you want to revoke this share link?")) {
       const updatedLink: ShareLink = {
         ...link,
-        expiresAt: new Date().toISOString(),
+        isActive: false,
       };
       saveShareLink(updatedLink);
       loadShareLinks();
@@ -193,9 +194,28 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
                 {showQR === link.id && (
                   <div className="mt-4 p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg inline-block">
                     <p className="text-xs text-gray-500 dark:text-gray-300 mb-2 text-center">QR Code</p>
-                    <div className="w-48 h-48 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                      <p className="text-sm text-gray-400 dark:text-gray-300">QR Code placeholder</p>
+                    <div className="w-48 h-48 bg-white p-2 rounded flex items-center justify-center">
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(url)}`}
+                        alt="QR Code"
+                        className="w-full h-full"
+                        onError={(e) => {
+                          // Fallback if QR code API fails
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.parentElement?.querySelector('.qr-fallback');
+                          if (fallback) {
+                            (fallback as HTMLElement).style.display = 'block';
+                          }
+                        }}
+                      />
+                      <div className="qr-fallback hidden w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                        <p className="text-sm text-gray-400 dark:text-gray-300 text-center px-2">
+                          QR Code unavailable. Please copy the link instead.
+                        </p>
+                      </div>
                     </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">Scan to view medical records</p>
                   </div>
                 )}
               </div>

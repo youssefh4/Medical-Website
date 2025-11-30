@@ -171,14 +171,16 @@ export const deleteMedication = (id: string): void => {
 
 // Share Links
 export const saveShareLink = (shareLink: ShareLink): void => {
-  const shareLinks = getShareLinks();
-  const existingIndex = shareLinks.findIndex((s) => s.id === shareLink.id);
+  if (typeof window === "undefined") return;
+  const data = localStorage.getItem(STORAGE_KEYS.SHARE_LINKS);
+  const allShareLinks: ShareLink[] = data ? JSON.parse(data) : [];
+  const existingIndex = allShareLinks.findIndex((s) => s.id === shareLink.id);
   if (existingIndex >= 0) {
-    shareLinks[existingIndex] = shareLink;
+    allShareLinks[existingIndex] = shareLink;
   } else {
-    shareLinks.push(shareLink);
+    allShareLinks.push(shareLink);
   }
-  localStorage.setItem(STORAGE_KEYS.SHARE_LINKS, JSON.stringify(shareLinks));
+  localStorage.setItem(STORAGE_KEYS.SHARE_LINKS, JSON.stringify(allShareLinks));
 };
 
 export const getShareLinks = (userId?: string, includeExpired: boolean = false): ShareLink[] => {
@@ -230,14 +232,18 @@ export const getShareLinkByToken = (token: string): ShareLink | null => {
 };
 
 export const deleteShareLink = (id: string): void => {
-  const shareLinks = getShareLinks();
-  const filtered = shareLinks.filter((s) => s.id !== id);
+  if (typeof window === "undefined") return;
+  const data = localStorage.getItem(STORAGE_KEYS.SHARE_LINKS);
+  const allShareLinks: ShareLink[] = data ? JSON.parse(data) : [];
+  const filtered = allShareLinks.filter((s) => s.id !== id);
   localStorage.setItem(STORAGE_KEYS.SHARE_LINKS, JSON.stringify(filtered));
 };
 
 export const revokeShareLink = (id: string): void => {
-  const shareLinks = getShareLinks();
-  const link = shareLinks.find((s) => s.id === id);
+  if (typeof window === "undefined") return;
+  const data = localStorage.getItem(STORAGE_KEYS.SHARE_LINKS);
+  const allShareLinks: ShareLink[] = data ? JSON.parse(data) : [];
+  const link = allShareLinks.find((s) => s.id === id);
   if (link) {
     link.isActive = false;
     saveShareLink(link);
@@ -245,8 +251,10 @@ export const revokeShareLink = (id: string): void => {
 };
 
 export const incrementShareLinkAccess = (token: string): void => {
-  const shareLinks = getShareLinks();
-  const link = shareLinks.find((s) => s.token === token);
+  if (typeof window === "undefined") return;
+  const data = localStorage.getItem(STORAGE_KEYS.SHARE_LINKS);
+  const allShareLinks: ShareLink[] = data ? JSON.parse(data) : [];
+  const link = allShareLinks.find((s) => s.token === token);
   if (link) {
     link.accessCount += 1;
     link.lastAccessedAt = new Date().toISOString();

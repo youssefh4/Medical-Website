@@ -1,37 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { MedicalCondition, Medication, MedicalScan, PatientProfile } from "@/types/medical";
 import { format } from "date-fns";
 import ScanGallery from "@/components/ScanGallery";
-
-// Full format (from copy link)
-interface ShareData {
-  expiresAt: string;
-  profile: PatientProfile | null;
-  conditions: MedicalCondition[];
-  medications: Medication[];
-  scans: MedicalScan[];
-}
-
-// Minimal format (from QR code)
-interface MinimalShareData {
-  e: string; // expiresAt
-  p: {
-    n: string; // fullName
-    b: string; // bloodType
-    a: string[]; // allergies
-    d: string; // dateOfBirth
-    ec: { name: string; phone: string; relationship: string };
-  } | null;
-  c: { n: string; s: string; d: string }[]; // conditions
-  m: { n: string; d: string; f: string; s: string }[]; // medications
-}
+import { getShareLinkByToken, incrementShareLinkAccess, getProfile, getConditions, getMedications, getScans } from "@/lib/storage";
 
 export default function SharePage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const token = params.token as string;
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
@@ -43,91 +20,41 @@ export default function SharePage() {
 
   useEffect(() => {
     loadShareData();
-  }, [token, searchParams]);
+  }, [token]);
 
   const loadShareData = () => {
     try {
-      // Get encoded data from URL
-      const encodedData = searchParams.get("data");
-      
-      if (!encodedData) {
+      if (!token) {
         setError("This share link is invalid. Please request a new link from the patient.");
         setLoading(false);
         return;
       }
 
-      // Decode the data
-      const decodedString = decodeURIComponent(atob(encodedData));
-      const rawData = JSON.parse(decodedString);
-
-      // Check if it's minimal format (QR code) or full format (copy link)
-      const isMinimalFormat = 'e' in rawData;
+      // Get share link by token
+      const shareLink = getShareLinkByToken(token);
       
-      let expiration: string;
-      let profileData: PatientProfile | null;
-      let conditionsData: MedicalCondition[];
-      let medicationsData: Medication[];
-      let scansData: MedicalScan[];
-
-      if (isMinimalFormat) {
-        // Parse minimal format from QR code
-        const minData = rawData as MinimalShareData;
-        expiration = minData.e;
-        
-        profileData = minData.p ? {
-          userId: '',
-          fullName: minData.p.n || '',
-          dateOfBirth: minData.p.d,
-          bloodType: minData.p.b,
-          allergies: minData.p.a || [],
-          emergencyContact: minData.p.ec,
-        } : null;
-        
-        conditionsData = (minData.c || []).map((c, i) => ({
-          id: String(i),
-          userId: '',
-          condition: c.n,
-          status: c.s as 'active' | 'chronic' | 'resolved',
-          diagnosisDate: c.d,
-          createdAt: '',
-          updatedAt: '',
-        }));
-        
-        medicationsData = (minData.m || []).map((m, i) => ({
-          id: String(i),
-          userId: '',
-          name: m.n,
-          dosage: m.d,
-          frequency: m.f,
-          status: m.s as 'active' | 'completed' | 'discontinued',
-          startDate: '',
-          createdAt: '',
-          updatedAt: '',
-        }));
-        
-        scansData = []; // No scans in minimal format
-      } else {
-        // Parse full format from copy link
-        const fullData = rawData as ShareData;
-        expiration = fullData.expiresAt;
-        profileData = fullData.profile;
-        conditionsData = fullData.conditions || [];
-        medicationsData = fullData.medications || [];
-        scansData = fullData.scans || [];
-      }
-
-      // Check if expired
-      const expiresAtDate = new Date(expiration);
-      const now = new Date();
-
-      if (expiresAtDate.getTime() <= now.getTime()) {
-        setError("This share link has expired. Please request a new link from the patient.");
+      console.log("Token:", token);
+      console.log("Share link found:", shareLink);
+      
+      if (!shareLink) {
+        console.error("Share link not found in localStorage. This is expected if visiting from a different browser/device.");
+        setError("This share link is invalid or has expired. Please request a new link from the patient. Note: Share links currently only work in the same browser where they were created due to localStorage limitations.");
         setLoading(false);
         return;
       }
 
+      // Increment access count
+      incrementShareLinkAccess(token);
+
+      // Get user's medical data from storage
+      const userId = shareLink.userId;
+      const profileData = getProfile(userId);
+      const conditionsData = getConditions(userId);
+      const medicationsData = getMedications(userId);
+      const scansData = getScans(userId);
+
       // Set the data
-      setExpiresAt(expiration);
+      setExpiresAt(shareLink.expiresAt);
       setProfile(profileData);
       setConditions(conditionsData);
       setMedications(medicationsData);
