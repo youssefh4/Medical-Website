@@ -1,13 +1,15 @@
-import { User, MedicalCondition, MedicalScan, PatientProfile, Medication, ShareLink } from "@/types/medical";
+import { User, MedicalCondition, MedicalScan, PatientProfile, Medication, ShareLink, LabResult, CommunityMessage } from "@/types/medical";
 
 const STORAGE_KEYS = {
   USERS: "medical_app_users",
   CURRENT_USER: "medical_app_current_user",
   CONDITIONS: "medical_app_conditions",
   SCANS: "medical_app_scans",
+  LAB_RESULTS: "medical_app_lab_results",
   MEDICATIONS: "medical_app_medications",
   PROFILES: "medical_app_profiles",
   SHARE_LINKS: "medical_app_share_links",
+  COMMUNITY_MESSAGES: "medical_app_community_messages",
   TOKEN: "medical_app_token",
 };
 
@@ -250,5 +252,59 @@ export const incrementShareLinkAccess = (token: string): void => {
     link.lastAccessedAt = new Date().toISOString();
     saveShareLink(link);
   }
+};
+
+// Lab Results
+export const saveLabResult = (labResult: LabResult): void => {
+  const labResults = getLabResults();
+  const existingIndex = labResults.findIndex((l) => l.id === labResult.id);
+  if (existingIndex >= 0) {
+    labResults[existingIndex] = labResult;
+  } else {
+    labResults.push(labResult);
+  }
+  localStorage.setItem(STORAGE_KEYS.LAB_RESULTS, JSON.stringify(labResults));
+};
+
+export const getLabResults = (userId?: string): LabResult[] => {
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem(STORAGE_KEYS.LAB_RESULTS);
+  const allLabResults = data ? JSON.parse(data) : [];
+  return userId
+    ? allLabResults.filter((l: LabResult) => l.userId === userId)
+    : allLabResults;
+};
+
+export const deleteLabResult = (id: string): void => {
+  const labResults = getLabResults();
+  const filtered = labResults.filter((l) => l.id !== id);
+  localStorage.setItem(STORAGE_KEYS.LAB_RESULTS, JSON.stringify(filtered));
+};
+
+// Community Messages
+export const saveCommunityMessage = (message: CommunityMessage): void => {
+  const messages = getCommunityMessages();
+  messages.push(message);
+  // Keep only last 1000 messages to prevent storage bloat
+  const recentMessages = messages.slice(-1000);
+  localStorage.setItem(STORAGE_KEYS.COMMUNITY_MESSAGES, JSON.stringify(recentMessages));
+};
+
+export const getCommunityMessages = (limit?: number): CommunityMessage[] => {
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem(STORAGE_KEYS.COMMUNITY_MESSAGES);
+  const allMessages = data ? JSON.parse(data) : [];
+  // Sort by creation date (oldest first for chat display)
+  const sorted = allMessages.sort((a: CommunityMessage, b: CommunityMessage) => 
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+  // If limit specified, get the last N messages (most recent)
+  return limit ? sorted.slice(-limit) : sorted;
+};
+
+export const deleteCommunityMessage = (id: string): void => {
+  const messages = getCommunityMessages();
+  const filtered = messages.filter((m) => m.id !== id);
+  localStorage.setItem(STORAGE_KEYS.COMMUNITY_MESSAGES, JSON.stringify(filtered));
 };
 

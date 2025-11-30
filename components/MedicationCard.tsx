@@ -15,11 +15,11 @@ export default function MedicationCard({
   onDelete,
 }: MedicationCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {medication.name}
             </h3>
             <span
@@ -35,7 +35,7 @@ export default function MedicationCard({
             </span>
           </div>
           
-          <div className="space-y-1 text-sm text-gray-600">
+          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
             <p>
               <span className="font-medium">Dosage:</span> {medication.dosage}
             </p>
@@ -60,20 +60,20 @@ export default function MedicationCard({
               </p>
             )}
             {medication.notes && (
-              <p className="mt-2 text-gray-500 italic">{medication.notes}</p>
+              <p className="mt-2 text-gray-500 dark:text-gray-400 italic">{medication.notes}</p>
             )}
           </div>
         </div>
         <div className="flex space-x-2 ml-4">
           <button
             onClick={() => onEdit(medication)}
-            className="text-primary-600 hover:text-primary-800 text-sm font-medium"
+            className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(medication.id)}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
+            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
           >
             Delete
           </button>

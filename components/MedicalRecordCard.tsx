@@ -15,16 +15,16 @@ export default function MedicalRecordCard({
   onDelete,
 }: MedicalRecordCardProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {condition.condition}
           </h3>
           {condition.description && (
-            <p className="mt-1 text-sm text-gray-600">{condition.description}</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{condition.description}</p>
           )}
-          <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+          <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
             <span>
               Diagnosed: {format(new Date(condition.diagnosisDate), "MMM dd, yyyy")}
             </span>
@@ -44,13 +44,13 @@ export default function MedicalRecordCard({
         <div className="flex space-x-2 ml-4">
           <button
             onClick={() => onEdit(condition)}
-            className="text-primary-600 hover:text-primary-800 text-sm font-medium"
+            className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(condition.id)}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
+            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
           >
             Delete
           </button>

@@ -3,7 +3,50 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-white text-gray-900 dark:bg-black dark:text-white;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode input styles */
+@layer base {
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    @apply bg-white text-gray-900 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700;
+  }
+  
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  input[type="time"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  textarea:focus,
+  select:focus {
+    @apply border-primary-500 dark:border-primary-500 ring-primary-500 dark:ring-primary-500 dark:bg-gray-800;
+  }
+  
+  input[type="text"]::placeholder,
+  input[type="date"]::placeholder,
+  input[type="time"]::placeholder,
+  input[type="email"]::placeholder,
+  textarea::placeholder {
+    @apply text-gray-500 dark:text-gray-500;
+  }
+  
+  select option {
+    @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-white;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    @apply dark:opacity-100;
+    cursor: pointer;
+  }
 }
 
 @layer utilities {

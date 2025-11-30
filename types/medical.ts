@@ -27,6 +27,24 @@ export interface MedicalScan {
   createdAt: string;
 }
 
+export interface LabResult {
+  id: string;
+  userId: string;
+  title: string;
+  testType: string;
+  testDate: string;
+  imageUrl: string; // PDF or image file
+  notes?: string;
+  createdAt: string;
+}
+
+export interface MedicationSchedule {
+  id: string;
+  time: string; // Time in HH:mm format (24-hour)
+  amount: string; // e.g., "1 tablet", "2 pills", "100mg"
+  enabled: boolean;
+}
+
 export interface Medication {
   id: string;
   userId: string;
@@ -38,6 +56,7 @@ export interface Medication {
   prescriber?: string;
   notes?: string;
   status: "active" | "completed" | "discontinued";
+  schedules?: MedicationSchedule[]; // Array of scheduled times and amounts
   createdAt: string;
   updatedAt: string;
 }
@@ -66,5 +85,13 @@ export interface ShareLink {
   isActive: boolean;
   accessCount: number;
   lastAccessedAt?: string;
+}
+
+export interface CommunityMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  message: string;
+  createdAt: string;
 }
 

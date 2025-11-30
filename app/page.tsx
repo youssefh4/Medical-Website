@@ -27,21 +27,21 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white dark:bg-black">
         <Navigation />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Welcome back, {user?.name}
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-gray-600 dark:text-gray-300">
                 Manage your medical records and health information
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+               <div className="bg-white dark:bg-gray-900 overflow-hidden shadow rounded-lg">
                 <div className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-primary-500 rounded-md p-3">
@@ -61,17 +61,17 @@ export default function Dashboard() {
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-600 truncate">
                           Medical Conditions
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg font-medium text-gray-900 dark:text-gray-900">
                           {conditions.length}
                         </dd>
                       </dl>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-5 py-3">
+                <div className="bg-gray-50 dark:bg-gray-800 px-5 py-3">
                   <div className="text-sm">
                     <Link
                       href="/profile#conditions"
@@ -83,7 +83,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+               <div className="bg-white dark:bg-gray-900 overflow-hidden shadow rounded-lg">
                 <div className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-medical-500 rounded-md p-3">
@@ -103,17 +103,17 @@ export default function Dashboard() {
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-600 truncate">
                           Medical Scans
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg font-medium text-gray-900 dark:text-gray-900">
                           {scans.length}
                         </dd>
                       </dl>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-5 py-3">
+                <div className="bg-gray-50 dark:bg-gray-800 px-5 py-3">
                   <div className="text-sm">
                     <Link
                       href="/profile#scans"
@@ -125,7 +125,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+               <div className="bg-white dark:bg-gray-900 overflow-hidden shadow rounded-lg">
                 <div className="p-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
@@ -145,17 +145,17 @@ export default function Dashboard() {
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-600 truncate">
                           Medications
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg font-medium text-gray-900 dark:text-gray-900">
                           {medications.length}
                         </dd>
                       </dl>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-5 py-3">
+                <div className="bg-gray-50 dark:bg-gray-800 px-5 py-3">
                   <div className="text-sm">
                     <Link
                       href="/profile#medications"
@@ -168,14 +168,14 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
                   Recent Activity
                 </h3>
                 {conditions.length === 0 && scans.length === 0 && medications.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">
+                     <p className="text-gray-500 dark:text-gray-300 mb-4">
                       No medical records yet. Get started by adding your first
                       condition, medication, or scan.
                     </p>
@@ -191,13 +191,13 @@ export default function Dashboard() {
                     {conditions.slice(0, 3).map((condition) => (
                       <div
                         key={condition.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                         className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-lg"
                       >
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {condition.condition}
                           </p>
-                          <p className="text-sm text-gray-500">
+                           <p className="text-sm text-gray-500 dark:text-gray-300">
                             Diagnosed: {format(new Date(condition.diagnosisDate), "MMM dd, yyyy")}
                           </p>
                         </div>
@@ -217,13 +217,13 @@ export default function Dashboard() {
                     {medications.slice(0, 3).map((medication) => (
                       <div
                         key={medication.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                         className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-lg"
                       >
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {medication.name}
                           </p>
-                          <p className="text-sm text-gray-500">
+                           <p className="text-sm text-gray-500 dark:text-gray-300">
                             {medication.dosage} - {medication.frequency}
                           </p>
                         </div>
@@ -243,13 +243,13 @@ export default function Dashboard() {
                     {scans.slice(0, 3).map((scan) => (
                       <div
                         key={scan.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                         className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-lg"
                       >
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {scan.title}
                           </p>
-                          <p className="text-sm text-gray-500">
+                           <p className="text-sm text-gray-500 dark:text-gray-300">
                             {scan.scanType} - {format(new Date(scan.scanDate), "MMM dd, yyyy")}
                           </p>
                         </div>

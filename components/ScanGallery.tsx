@@ -5,11 +5,10 @@ import { format } from "date-fns";
 
 interface ScanGalleryProps {
   scans: MedicalScan[];
-  onDelete?: (id: string) => void;
-  readOnly?: boolean;
+  onDelete: (id: string) => void;
 }
 
-export default function ScanGallery({ scans, onDelete, readOnly = false }: ScanGalleryProps) {
+export default function ScanGallery({ scans, onDelete }: ScanGalleryProps) {
   if (scans.length === 0) {
     return (
       <div className="text-center py-12">
@@ -23,7 +22,7 @@ export default function ScanGallery({ scans, onDelete, readOnly = false }: ScanG
       {scans.map((scan) => (
         <div
           key={scan.id}
-          className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
         >
           <div className="relative h-48 bg-gray-100">
             {scan.imageUrl.startsWith("data:") ? (
@@ -61,14 +60,12 @@ export default function ScanGallery({ scans, onDelete, readOnly = false }: ScanG
             {scan.notes && (
               <p className="text-sm text-gray-600 mt-2">{scan.notes}</p>
             )}
-            {!readOnly && onDelete && (
-              <button
-                onClick={() => onDelete(scan.id)}
-                className="mt-3 text-red-600 hover:text-red-800 text-sm font-medium"
-              >
-                Delete
-              </button>
-            )}
+            <button
+              onClick={() => onDelete(scan.id)}
+              className="mt-3 text-red-600 hover:text-red-800 text-sm font-medium"
+            >
+              Delete
+            </button>
           </div>
         </div>
       ))}

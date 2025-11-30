@@ -16,25 +16,35 @@ import {
   deleteMedication,
   getProfile,
   saveProfile,
+  getLabResults,
+  saveLabResult,
+  deleteLabResult,
 } from "@/lib/storage";
-import { MedicalCondition, MedicalScan, PatientProfile, Medication } from "@/types/medical";
+import { MedicalCondition, MedicalScan, PatientProfile, Medication, LabResult } from "@/types/medical";
 import MedicalRecordCard from "@/components/MedicalRecordCard";
 import ConditionForm from "@/components/ConditionForm";
 import ScanGallery from "@/components/ScanGallery";
 import UploadScan from "@/components/UploadScan";
+import LabResultGallery from "@/components/LabResultGallery";
+import UploadLabResult from "@/components/UploadLabResult";
 import ProfileForm from "@/components/ProfileForm";
 import MedicationForm from "@/components/MedicationForm";
 import MedicationCard from "@/components/MedicationCard";
+import MedicationScheduleTable from "@/components/MedicationScheduleTable";
+import MedicationReminderAlerts from "@/components/MedicationReminderAlerts";
+import { useMedicationReminders } from "@/components/useMedicationReminders";
 import ShareLinkManager from "@/components/ShareLinkManager";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [conditions, setConditions] = useState<MedicalCondition[]>([]);
   const [scans, setScans] = useState<MedicalScan[]>([]);
+  const [labResults, setLabResults] = useState<LabResult[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [showConditionForm, setShowConditionForm] = useState(false);
   const [showScanForm, setShowScanForm] = useState(false);
+  const [showLabResultForm, setShowLabResultForm] = useState(false);
   const [showMedicationForm, setShowMedicationForm] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editingCondition, setEditingCondition] =
@@ -42,12 +52,21 @@ export default function ProfilePage() {
   const [editingMedication, setEditingMedication] =
     useState<Medication | null>(null);
 
+  // Medication reminders
+  const {
+    activeReminders,
+    dismissReminder,
+    notificationPermission,
+    requestNotificationPermission,
+  } = useMedicationReminders(medications);
+
   useEffect(() => {
     const currentUser = getAuthUser();
     if (currentUser) {
       setUser(currentUser);
       setConditions(getConditions(currentUser.id));
       setScans(getScans(currentUser.id));
+      setLabResults(getLabResults(currentUser.id));
       setMedications(getMedications(currentUser.id));
       const userProfile = getProfile(currentUser.id);
       if (userProfile) {
@@ -105,6 +124,23 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSaveLabResult = (labResult: LabResult) => {
+    saveLabResult(labResult);
+    if (user) {
+      setLabResults(getLabResults(user.id));
+    }
+    setShowLabResultForm(false);
+  };
+
+  const handleDeleteLabResult = (id: string) => {
+    if (confirm("Are you sure you want to delete this lab result?")) {
+      deleteLabResult(id);
+      if (user) {
+        setLabResults(getLabResults(user.id));
+      }
+    }
+  };
+
   const handleSaveMedication = (medication: Medication) => {
     saveMedication(medication);
     if (user) {
@@ -128,6 +164,21 @@ export default function ProfilePage() {
     setShowMedicationForm(true);
   };
 
+  const handleUpdateMedicationSchedule = (medicationId: string, schedules: any[]) => {
+    const medication = medications.find((m) => m.id === medicationId);
+    if (medication) {
+      const updatedMedication: Medication = {
+        ...medication,
+        schedules,
+        updatedAt: new Date().toISOString(),
+      };
+      saveMedication(updatedMedication);
+      if (user) {
+        setMedications(getMedications(user.id));
+      }
+    }
+  };
+
   const handleSaveProfile = (updatedProfile: PatientProfile) => {
     saveProfile(updatedProfile);
     if (user) {
@@ -148,24 +199,31 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white dark:bg-black">
         <Navigation />
+        {/* Medication Reminder Alerts */}
+        <MedicationReminderAlerts
+          reminders={activeReminders}
+          onDismiss={dismissReminder}
+          notificationPermission={notificationPermission}
+          onRequestPermission={requestNotificationPermission}
+        />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Patient Profile
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-gray-600 dark:text-gray-300">
                 Manage your medical information and records
               </p>
             </div>
 
             {/* Patient Information */}
-            <div className="bg-white shadow rounded-lg mb-6" id="profile">
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg mb-6" id="profile">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Personal Information
                   </h2>
                   {!isEditingProfile && (
@@ -179,7 +237,7 @@ export default function ProfilePage() {
                 </div>
 
                 {isEditingProfile && profile ? (
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <ProfileForm
                       profile={profile}
                       onSave={handleSaveProfile}
@@ -189,7 +247,7 @@ export default function ProfilePage() {
                 ) : (
                   <div className="space-y-6">
                     {/* Profile Picture Display */}
-                    <div className="flex items-center space-x-6 pb-6 border-b border-gray-200">
+                    <div className="flex items-center space-x-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                       <div className="relative">
                         {profile?.profilePicture ? (
                           <div className="relative">
@@ -219,16 +277,16 @@ export default function ProfilePage() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-gray-900">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                           {profile?.fullName || user.name}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
                           Patient Profile
                         </p>
                         {!profile?.profilePicture && (
                           <button
                             onClick={() => setIsEditingProfile(true)}
-                            className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium"
+                            className="mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
                           >
                             Upload profile picture →
                           </button>
@@ -238,29 +296,29 @@ export default function ProfilePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-white">
                           Full Name
                         </label>
-                        <p className="mt-1 text-sm text-gray-900">
+                        <p className="mt-1 text-sm text-gray-900 dark:text-white">
                           {profile?.fullName || user.name}
                         </p>
                       </div>
                       {profile?.dateOfBirth && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-white">
                             Date of Birth
                           </label>
-                          <p className="mt-1 text-sm text-gray-900">
+                          <p className="mt-1 text-sm text-gray-900 dark:text-white">
                             {new Date(profile.dateOfBirth).toLocaleDateString()}
                           </p>
                         </div>
                       )}
                       {profile?.bloodType && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-white">
                             Blood Type
                           </label>
-                          <p className="mt-1 text-sm text-gray-900">
+                          <p className="mt-1 text-sm text-gray-900 dark:text-white">
                             {profile.bloodType}
                           </p>
                         </div>
@@ -269,14 +327,14 @@ export default function ProfilePage() {
 
                     {profile?.allergies && profile.allergies.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
                           Allergies
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {profile.allergies.map((allergy, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                             >
                               {allergy}
                             </span>
@@ -289,37 +347,37 @@ export default function ProfilePage() {
                       (profile.emergencyContact.name ||
                         profile.emergencyContact.phone ||
                         profile.emergencyContact.relationship) && (
-                        <div className="border-t border-gray-200 pt-4">
-                          <h3 className="text-lg font-medium text-gray-900 mb-3">
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
                             Emergency Contact
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {profile.emergencyContact.name && (
                               <div>
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-white">
                                   Name
                                 </label>
-                                <p className="mt-1 text-sm text-gray-900">
+                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                   {profile.emergencyContact.name}
                                 </p>
                               </div>
                             )}
                             {profile.emergencyContact.phone && (
                               <div>
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-white">
                                   Phone Number
                                 </label>
-                                <p className="mt-1 text-sm text-gray-900">
+                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                   {profile.emergencyContact.phone}
                                 </p>
                               </div>
                             )}
                             {profile.emergencyContact.relationship && (
                               <div>
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-white">
                                   Relationship
                                 </label>
-                                <p className="mt-1 text-sm text-gray-900">
+                                <p className="mt-1 text-sm text-gray-900 dark:text-white">
                                   {profile.emergencyContact.relationship}
                                 </p>
                               </div>
@@ -335,8 +393,8 @@ export default function ProfilePage() {
                         (!profile.emergencyContact.name &&
                           !profile.emergencyContact.phone &&
                           !profile.emergencyContact.relationship))) && (
-                      <div className="text-center py-8 border-t border-gray-200">
-                        <p className="text-gray-500 mb-4">
+                      <div className="text-center py-8 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-gray-500 dark:text-gray-300 mb-4">
                           Complete your profile by adding additional information.
                         </p>
                         <button
@@ -353,10 +411,10 @@ export default function ProfilePage() {
             </div>
 
             {/* Medical Conditions */}
-            <div className="bg-white shadow rounded-lg mb-6" id="conditions">
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg mb-6" id="conditions">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Medical Conditions
                   </h2>
                   <button
@@ -371,7 +429,7 @@ export default function ProfilePage() {
                 </div>
 
                 {showConditionForm && (
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <ConditionForm
                       condition={editingCondition}
                       userId={user.id}
@@ -386,7 +444,7 @@ export default function ProfilePage() {
 
                 {conditions.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-gray-500 dark:text-gray-300 mb-4">
                       No medical conditions recorded yet.
                     </p>
                     <button
@@ -412,10 +470,10 @@ export default function ProfilePage() {
             </div>
 
             {/* Medications */}
-            <div className="bg-white shadow rounded-lg mb-6" id="medications">
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg mb-6" id="medications">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Medications
                   </h2>
                   <button
@@ -430,7 +488,7 @@ export default function ProfilePage() {
                 </div>
 
                 {showMedicationForm && (
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <MedicationForm
                       medication={editingMedication}
                       userId={user.id}
@@ -445,7 +503,7 @@ export default function ProfilePage() {
 
                 {medications.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-gray-500 dark:text-gray-300 mb-4">
                       No medications recorded yet.
                     </p>
                     <button
@@ -470,11 +528,21 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Medication Schedule Table */}
+            {medications.length > 0 && (
+              <div className="mb-6" id="medication-schedule">
+                <MedicationScheduleTable
+                  medications={medications}
+                  onUpdateSchedule={handleUpdateMedicationSchedule}
+                />
+              </div>
+            )}
+
             {/* Medical Scans */}
-            <div className="bg-white shadow rounded-lg" id="scans">
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg mb-6" id="scans">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Medical Scans
                   </h2>
                   <button
@@ -486,7 +554,7 @@ export default function ProfilePage() {
                 </div>
 
                 {showScanForm && (
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <UploadScan
                       userId={user.id}
                       onSave={handleSaveScan}
@@ -499,8 +567,40 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Lab Results */}
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg" id="lab-results">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Lab Results
+                  </h2>
+                  <button
+                    onClick={() => setShowLabResultForm(!showLabResultForm)}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+                  >
+                    {showLabResultForm ? "Cancel" : "Upload Lab Result"}
+                  </button>
+                </div>
+
+                {showLabResultForm && (
+                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <UploadLabResult
+                      userId={user.id}
+                      onSave={handleSaveLabResult}
+                      onCancel={() => setShowLabResultForm(false)}
+                    />
+                  </div>
+                )}
+
+                <LabResultGallery
+                  labResults={labResults}
+                  onDelete={handleDeleteLabResult}
+                />
+              </div>
+            </div>
+
             {/* Share Medical Records */}
-            <div className="bg-white shadow rounded-lg mt-6" id="share">
+            <div className="bg-white dark:bg-gray-900 shadow rounded-lg mt-6" id="share">
               <div className="px-4 py-5 sm:p-6">
                 <ShareLinkManager userId={user.id} />
               </div>
