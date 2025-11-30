@@ -44,10 +44,12 @@ export default function AIChat() {
       }
 
       // Get user's medical data for context
-      const conditions = getConditions(user.id);
-      const medications = getMedications(user.id);
-      const scans = getScans(user.id);
-      const profile = getProfile(user.id);
+      const [conditions, medications, scans, profile] = await Promise.all([
+        getConditions(user.id),
+        getMedications(user.id),
+        getScans(user.id),
+        getProfile(user.id),
+      ]);
 
       const response = await fetch("/api/chat", {
         method: "POST",

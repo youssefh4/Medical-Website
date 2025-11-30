@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { CommunityMessage } from "@/types/medical";
-import { getCommunityMessages, saveCommunityMessage } from "@/lib/storage";
+import { getCommunityMessages, saveCommunityMessage, subscribeToCommunityMessages } from "@/lib/storage";
 import { getAuthUser } from "@/lib/auth";
 import { format, formatDistanceToNow } from "date-fns";
+import { db } from "@/lib/firebase";
 
 interface CommunityChatProps {
   userId: string;
@@ -18,20 +19,34 @@ export default function CommunityChat({ userId, userName }: CommunityChatProps) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Load messages on mount and set up auto-refresh
+  // Set up real-time subscription or polling fallback
   useEffect(() => {
-    loadMessages();
-    // Refresh messages every 2 seconds to see new messages from other users
-    const interval = setInterval(loadMessages, 2000);
-    return () => clearInterval(interval);
+    // Check if Firebase is available for real-time updates
+    if (db) {
+      // Use Firebase real-time subscription
+      console.log("Using Firebase real-time subscription for community chat");
+      const unsubscribe = subscribeToCommunityMessages((allMessages) => {
+        setMessages(allMessages);
+      }, 100);
+      
+      return () => {
+        unsubscribe();
+      };
+    } else {
+      // Fallback to polling if Firebase not available
+      console.log("Firebase not available, using polling for community chat");
+      loadMessages();
+      const interval = setInterval(loadMessages, 2000);
+      return () => clearInterval(interval);
+    }
   }, []);
 
-  const loadMessages = () => {
-    const allMessages = getCommunityMessages(100); // Get last 100 messages (already sorted oldest first)
+  const loadMessages = async () => {
+    const allMessages = await getCommunityMessages(100); // Get last 100 messages (already sorted oldest first)
     setMessages(allMessages);
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
@@ -44,9 +59,9 @@ export default function CommunityChat({ userId, userName }: CommunityChatProps) 
       createdAt: new Date().toISOString(),
     };
 
-    saveCommunityMessage(message);
+    await saveCommunityMessage(message);
     setNewMessage("");
-    loadMessages();
+    await loadMessages();
     setIsLoading(false);
     
     // Only scroll to bottom when user sends their own message

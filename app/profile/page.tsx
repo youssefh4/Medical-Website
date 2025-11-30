@@ -61,43 +61,54 @@ export default function ProfilePage() {
   } = useMedicationReminders(medications);
 
   useEffect(() => {
-    const currentUser = getAuthUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setConditions(getConditions(currentUser.id));
-      setScans(getScans(currentUser.id));
-      setLabResults(getLabResults(currentUser.id));
-      setMedications(getMedications(currentUser.id));
-      const userProfile = getProfile(currentUser.id);
-      if (userProfile) {
-        setProfile(userProfile);
-      } else {
-        // Create default profile
-        const newProfile: PatientProfile = {
-          userId: currentUser.id,
-          fullName: currentUser.name,
-          updatedAt: new Date().toISOString(),
-        };
-        saveProfile(newProfile);
-        setProfile(newProfile);
+    const loadData = async () => {
+      const currentUser = getAuthUser();
+      if (currentUser) {
+        setUser(currentUser);
+        const [conditionsData, scansData, labResultsData, medicationsData, userProfile] = await Promise.all([
+          getConditions(currentUser.id),
+          getScans(currentUser.id),
+          getLabResults(currentUser.id),
+          getMedications(currentUser.id),
+          getProfile(currentUser.id),
+        ]);
+        setConditions(conditionsData);
+        setScans(scansData);
+        setLabResults(labResultsData);
+        setMedications(medicationsData);
+        if (userProfile) {
+          setProfile(userProfile);
+        } else {
+          // Create default profile
+          const newProfile: PatientProfile = {
+            userId: currentUser.id,
+            fullName: currentUser.name,
+            updatedAt: new Date().toISOString(),
+          };
+          await saveProfile(newProfile);
+          setProfile(newProfile);
+        }
       }
-    }
+    };
+    loadData();
   }, []);
 
-  const handleSaveCondition = (condition: MedicalCondition) => {
-    saveCondition(condition);
+  const handleSaveCondition = async (condition: MedicalCondition) => {
+    await saveCondition(condition);
     if (user) {
-      setConditions(getConditions(user.id));
+      const conditionsData = await getConditions(user.id);
+      setConditions(conditionsData);
     }
     setShowConditionForm(false);
     setEditingCondition(null);
   };
 
-  const handleDeleteCondition = (id: string) => {
+  const handleDeleteCondition = async (id: string) => {
     if (confirm("Are you sure you want to delete this condition?")) {
-      deleteCondition(id);
+      await deleteCondition(id);
       if (user) {
-        setConditions(getConditions(user.id));
+        const conditionsData = await getConditions(user.id);
+        setConditions(conditionsData);
       }
     }
   };
@@ -107,54 +118,60 @@ export default function ProfilePage() {
     setShowConditionForm(true);
   };
 
-  const handleSaveScan = (scan: MedicalScan) => {
-    saveScan(scan);
+  const handleSaveScan = async (scan: MedicalScan) => {
+    await saveScan(scan);
     if (user) {
-      setScans(getScans(user.id));
+      const scansData = await getScans(user.id);
+      setScans(scansData);
     }
     setShowScanForm(false);
   };
 
-  const handleDeleteScan = (id: string) => {
+  const handleDeleteScan = async (id: string) => {
     if (confirm("Are you sure you want to delete this scan?")) {
-      deleteScan(id);
+      await deleteScan(id);
       if (user) {
-        setScans(getScans(user.id));
+        const scansData = await getScans(user.id);
+        setScans(scansData);
       }
     }
   };
 
-  const handleSaveLabResult = (labResult: LabResult) => {
-    saveLabResult(labResult);
+  const handleSaveLabResult = async (labResult: LabResult) => {
+    await saveLabResult(labResult);
     if (user) {
-      setLabResults(getLabResults(user.id));
+      const labResultsData = await getLabResults(user.id);
+      setLabResults(labResultsData);
     }
     setShowLabResultForm(false);
   };
 
-  const handleDeleteLabResult = (id: string) => {
+  const handleDeleteLabResult = async (id: string) => {
     if (confirm("Are you sure you want to delete this lab result?")) {
-      deleteLabResult(id);
+      await deleteLabResult(id);
       if (user) {
-        setLabResults(getLabResults(user.id));
+        const labResultsData = await getLabResults(user.id);
+        setLabResults(labResultsData);
       }
     }
   };
 
-  const handleSaveMedication = (medication: Medication) => {
-    saveMedication(medication);
+  const handleSaveMedication = async (medication: Medication) => {
+    await saveMedication(medication);
     if (user) {
-      setMedications(getMedications(user.id));
+      const medicationsData = await getMedications(user.id);
+      setMedications(medicationsData);
     }
     setShowMedicationForm(false);
     setEditingMedication(null);
   };
 
-  const handleDeleteMedication = (id: string) => {
+  const handleDeleteMedication = async (id: string) => {
     if (confirm("Are you sure you want to delete this medication?")) {
-      deleteMedication(id);
+      await deleteMedication(id);
       if (user) {
-        setMedications(getMedications(user.id));
+        const medicationsData = await getMedications(user.id);
+        setMedications(medicationsData);
       }
     }
   };
@@ -164,7 +181,7 @@ export default function ProfilePage() {
     setShowMedicationForm(true);
   };
 
-  const handleUpdateMedicationSchedule = (medicationId: string, schedules: any[]) => {
+  const handleUpdateMedicationSchedule = async (medicationId: string, schedules: any[]) => {
     const medication = medications.find((m) => m.id === medicationId);
     if (medication) {
       const updatedMedication: Medication = {
@@ -172,17 +189,19 @@ export default function ProfilePage() {
         schedules,
         updatedAt: new Date().toISOString(),
       };
-      saveMedication(updatedMedication);
+      await saveMedication(updatedMedication);
       if (user) {
-        setMedications(getMedications(user.id));
+        const medicationsData = await getMedications(user.id);
+        setMedications(medicationsData);
       }
     }
   };
 
-  const handleSaveProfile = (updatedProfile: PatientProfile) => {
-    saveProfile(updatedProfile);
+  const handleSaveProfile = async (updatedProfile: PatientProfile) => {
+    await saveProfile(updatedProfile);
     if (user) {
-      setProfile(getProfile(user.id));
+      const profileData = await getProfile(user.id);
+      setProfile(profileData);
     }
     setIsEditingProfile(false);
   };

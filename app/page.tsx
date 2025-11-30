@@ -8,21 +8,36 @@ import { getConditions, getScans, getMedications } from "@/lib/storage";
 import { MedicalCondition, MedicalScan, Medication } from "@/types/medical";
 import Link from "next/link";
 import { format } from "date-fns";
+import { db } from "@/lib/firebase";
+import { testFirebase } from "@/lib/firebaseTest";
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [conditions, setConditions] = useState<MedicalCondition[]>([]);
   const [scans, setScans] = useState<MedicalScan[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [firebaseStatus, setFirebaseStatus] = useState<any>(null);
 
   useEffect(() => {
-    const currentUser = getAuthUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setConditions(getConditions(currentUser.id));
-      setScans(getScans(currentUser.id));
-      setMedications(getMedications(currentUser.id));
-    }
+    const loadData = async () => {
+      // Test Firebase connection
+      const firebaseTest = await testFirebase();
+      setFirebaseStatus(firebaseTest);
+      
+      const currentUser = getAuthUser();
+      if (currentUser) {
+        setUser(currentUser);
+        const [conditionsData, scansData, medicationsData] = await Promise.all([
+          getConditions(currentUser.id),
+          getScans(currentUser.id),
+          getMedications(currentUser.id),
+        ]);
+        setConditions(conditionsData);
+        setScans(scansData);
+        setMedications(medicationsData);
+      }
+    };
+    loadData();
   }, []);
 
   return (
@@ -38,6 +53,18 @@ export default function Dashboard() {
               <p className="mt-2 text-gray-600 dark:text-gray-300">
                 Manage your medical records and health information
               </p>
+              {firebaseStatus && (
+                <div className={`mt-4 p-3 rounded-lg text-sm ${
+                  firebaseStatus.connected 
+                    ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300" 
+                    : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300"
+                }`}>
+                  <strong>Firebase Status:</strong> {firebaseStatus.connected ? "✅ Connected" : "⚠️ Using localStorage"}
+                  {firebaseStatus.error && (
+                    <div className="mt-1 text-xs">Error: {firebaseStatus.error}</div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

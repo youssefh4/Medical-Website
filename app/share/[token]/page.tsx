@@ -22,7 +22,7 @@ export default function SharePage() {
     loadShareData();
   }, [token]);
 
-  const loadShareData = () => {
+  const loadShareData = async () => {
     try {
       if (!token) {
         setError("This share link is invalid. Please request a new link from the patient.");
@@ -31,27 +31,29 @@ export default function SharePage() {
       }
 
       // Get share link by token
-      const shareLink = getShareLinkByToken(token);
+      const shareLink = await getShareLinkByToken(token);
       
       console.log("Token:", token);
       console.log("Share link found:", shareLink);
       
       if (!shareLink) {
-        console.error("Share link not found in localStorage. This is expected if visiting from a different browser/device.");
-        setError("This share link is invalid or has expired. Please request a new link from the patient. Note: Share links currently only work in the same browser where they were created due to localStorage limitations.");
+        console.error("Share link not found.");
+        setError("This share link is invalid or has expired. Please request a new link from the patient.");
         setLoading(false);
         return;
       }
 
       // Increment access count
-      incrementShareLinkAccess(token);
+      await incrementShareLinkAccess(token);
 
       // Get user's medical data from storage
       const userId = shareLink.userId;
-      const profileData = getProfile(userId);
-      const conditionsData = getConditions(userId);
-      const medicationsData = getMedications(userId);
-      const scansData = getScans(userId);
+      const [profileData, conditionsData, medicationsData, scansData] = await Promise.all([
+        getProfile(userId),
+        getConditions(userId),
+        getMedications(userId),
+        getScans(userId),
+      ]);
 
       // Set the data
       setExpiresAt(shareLink.expiresAt);

@@ -13,17 +13,116 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
   const [shareLinks, setShareLinks] = useState<ShareLink[]>([]);
   const [expirationDays, setExpirationDays] = useState(7);
   const [showQR, setShowQR] = useState<string | null>(null);
+  const [localIP, setLocalIP] = useState<string | null>(null);
+  const [detectedIPs, setDetectedIPs] = useState<string[]>([]);
+  const [ipDetectionError, setIpDetectionError] = useState<string | null>(null);
+
+  // Get local network IP address for QR codes
+  useEffect(() => {
+    const getLocalIP = async () => {
+      const foundIPs: string[] = [];
+      
+      try {
+        // Method 1: Try WebRTC (most reliable)
+        const pc = new RTCPeerConnection({ 
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+        
+        let ipFound = false;
+        const timeout = setTimeout(() => {
+          if (!ipFound && foundIPs.length === 0) {
+            pc.close();
+            tryNetworkInterfaces();
+          } else if (foundIPs.length > 0) {
+            // Use the first non-localhost IP (usually the main network adapter)
+            const mainIP = foundIPs.find(ip => !ip.startsWith("192.168.137.")) || foundIPs[0];
+            setLocalIP(mainIP);
+            setDetectedIPs(foundIPs);
+          }
+        }, 5000);
+
+        pc.createDataChannel("");
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            const candidate = event.candidate.candidate;
+            // Match IPv4 addresses (not localhost)
+            const match = candidate.match(/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/);
+            if (match && match[1] && !match[1].startsWith("127.") && !match[1].startsWith("0.")) {
+              const ip = match[1];
+              if (!foundIPs.includes(ip)) {
+                foundIPs.push(ip);
+                console.log("Detected IP:", ip);
+              }
+            }
+          } else if (event.candidate === null) {
+            // No more candidates
+            clearTimeout(timeout);
+            pc.close();
+            if (foundIPs.length > 0) {
+              // Use the first non-hotspot IP, or first IP if all are hotspots
+              const mainIP = foundIPs.find(ip => !ip.startsWith("192.168.137.")) || foundIPs[0];
+              setLocalIP(mainIP);
+              setDetectedIPs(foundIPs);
+            } else {
+              tryNetworkInterfaces();
+            }
+          }
+        };
+        
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+        } catch (error) {
+          clearTimeout(timeout);
+          pc.close();
+          if (foundIPs.length > 0) {
+            const mainIP = foundIPs.find(ip => !ip.startsWith("192.168.137.")) || foundIPs[0];
+            setLocalIP(mainIP);
+            setDetectedIPs(foundIPs);
+          } else {
+            tryNetworkInterfaces();
+          }
+        }
+      } catch (error) {
+        console.log("WebRTC method failed:", error);
+        if (foundIPs.length > 0) {
+          const mainIP = foundIPs.find(ip => !ip.startsWith("192.168.137.")) || foundIPs[0];
+          setLocalIP(mainIP);
+          setDetectedIPs(foundIPs);
+        } else {
+          tryNetworkInterfaces();
+        }
+      }
+    };
+
+    const tryNetworkInterfaces = () => {
+      // Method 2: Try to get IP from window.location if on network
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        // If not localhost, the hostname might be the IP
+        if (hostname !== 'localhost' && hostname !== '127.0.0.1' && /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+          setLocalIP(hostname);
+          setDetectedIPs([hostname]);
+        } else {
+          // Show instructions for manual IP entry
+          setIpDetectionError("Could not auto-detect IP. Run 'ipconfig' in CMD to find your IP address.");
+        }
+      }
+    };
+
+    getLocalIP();
+  }, []);
 
   useEffect(() => {
     loadShareLinks();
   }, [userId]);
 
-  const loadShareLinks = () => {
-    const links = getShareLinks(userId);
+  const loadShareLinks = async () => {
+    const links = await getShareLinks(userId);
     setShareLinks(links);
   };
 
-  const generateShareLink = () => {
+  const generateShareLink = async () => {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + expirationDays);
 
@@ -40,8 +139,8 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
       accessCount: 0,
     };
 
-    saveShareLink(newLink);
-    loadShareLinks();
+    await saveShareLink(newLink);
+    await loadShareLinks();
   };
 
   const handleCopy = (link: ShareLink) => {
@@ -50,21 +149,21 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
     alert("Link copied to clipboard!");
   };
 
-  const handleDelete = (linkId: string) => {
+  const handleDelete = async (linkId: string) => {
     if (confirm("Are you sure you want to delete this share link?")) {
-      deleteShareLink(linkId);
-      loadShareLinks();
+      await deleteShareLink(linkId);
+      await loadShareLinks();
     }
   };
 
-  const handleRevoke = (link: ShareLink) => {
+  const handleRevoke = async (link: ShareLink) => {
     if (confirm("Are you sure you want to revoke this share link?")) {
       const updatedLink: ShareLink = {
         ...link,
         isActive: false,
       };
-      saveShareLink(updatedLink);
-      loadShareLinks();
+      await saveShareLink(updatedLink);
+      await loadShareLinks();
     }
   };
 
@@ -135,7 +234,22 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
         <div className="space-y-4">
           {shareLinks.map((link) => {
             const isExpired = new Date(link.expiresAt) <= new Date();
-            const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/share/${link.token}`;
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+            const url = `${baseUrl}/share/${link.token}`;
+            
+            // For QR code, use local network IP if available and on localhost
+            const qrUrl = (() => {
+              if (typeof window === 'undefined') return url;
+              const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+              if (isLocalhost && localIP) {
+                const port = window.location.port || '3000';
+                const networkUrl = `http://${localIP}:${port}/share/${link.token}`;
+                console.log('QR Code URL (network):', networkUrl);
+                return networkUrl;
+              }
+              console.log('QR Code URL (local):', url);
+              return url;
+            })();
 
             return (
               <div
@@ -196,7 +310,7 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
                     <p className="text-xs text-gray-500 dark:text-gray-300 mb-2 text-center">QR Code</p>
                     <div className="w-48 h-48 bg-white p-2 rounded flex items-center justify-center">
                       <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(url)}`}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=192x192&data=${encodeURIComponent(qrUrl)}`}
                         alt="QR Code"
                         className="w-full h-full"
                         onError={(e) => {
@@ -216,6 +330,45 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">Scan to view medical records</p>
+                    {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                      <div className="mt-2 space-y-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        {localIP ? (
+                          <>
+                            <p className="text-xs text-blue-700 dark:text-blue-300 text-center font-semibold">
+                              📱 Network URL for QR Code:
+                            </p>
+                            <p className="text-xs text-blue-600 dark:text-blue-400 text-center font-mono break-all">
+                              {qrUrl}
+                            </p>
+                            {detectedIPs.length > 1 && (
+                              <p className="text-[10px] text-blue-500 dark:text-blue-400 text-center mt-1">
+                                (Detected {detectedIPs.length} IPs, using: {localIP})
+                              </p>
+                            )}
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 mt-2 space-y-1">
+                              <p className="font-semibold">Troubleshooting:</p>
+                              <p>• Make sure your phone is on the same Wi‑Fi network</p>
+                              <p>• Check Windows Firewall allows port 3000</p>
+                              <p>• Try accessing <span className="font-mono">{qrUrl}</span> directly on your phone</p>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-xs text-yellow-700 dark:text-yellow-400 text-center space-y-2">
+                            <p className="font-semibold">⚠️ IP not detected automatically</p>
+                            <div className="text-[10px] space-y-1 text-left bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+                              <p><strong>To find your IP:</strong></p>
+                              <p>1. Open CMD (Command Prompt)</p>
+                              <p>2. Type: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">ipconfig</code></p>
+                              <p>3. Look for "IPv4 Address" (usually 192.168.x.x)</p>
+                              <p>4. Use: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">http://YOUR_IP:3000/share/{link.token}</code></p>
+                            </div>
+                          </div>
+                        )}
+                        {ipDetectionError && (
+                          <p className="text-[10px] text-red-600 dark:text-red-400 text-center mt-1">{ipDetectionError}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
