@@ -40,6 +40,17 @@ const toTimestamp = (dateString: string | undefined): Timestamp | null => {
   return Timestamp.fromDate(new Date(dateString));
 };
 
+// Helper to remove undefined values from object (Firestore doesn't accept undefined)
+const removeUndefined = (obj: any): any => {
+  const cleaned: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  }
+  return cleaned;
+};
+
 // ==================== USER MANAGEMENT ====================
 
 export const saveUser = async (user: User): Promise<void> => {
@@ -77,12 +88,13 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
 export const saveCondition = async (condition: MedicalCondition): Promise<void> => {
   if (!db) return;
-  await setDoc(doc(db, "conditions", condition.id), {
+  const data = removeUndefined({
     ...condition,
     diagnosisDate: toTimestamp(condition.diagnosisDate),
     createdAt: toTimestamp(condition.createdAt) || Timestamp.now(),
     updatedAt: toTimestamp(condition.updatedAt) || Timestamp.now(),
   });
+  await setDoc(doc(db, "conditions", condition.id), data);
 };
 
 export const getConditions = async (userId?: string): Promise<MedicalCondition[]> => {
@@ -128,13 +140,14 @@ export const deleteCondition = async (id: string): Promise<void> => {
 
 export const saveMedication = async (medication: Medication): Promise<void> => {
   if (!db) return;
-  await setDoc(doc(db, "medications", medication.id), {
+  const data = removeUndefined({
     ...medication,
     startDate: toTimestamp(medication.startDate),
     endDate: medication.endDate ? toTimestamp(medication.endDate) : null,
     createdAt: toTimestamp(medication.createdAt) || Timestamp.now(),
     updatedAt: toTimestamp(medication.updatedAt) || Timestamp.now(),
   });
+  await setDoc(doc(db, "medications", medication.id), data);
 };
 
 export const getMedications = async (userId?: string): Promise<Medication[]> => {
@@ -181,11 +194,12 @@ export const deleteMedication = async (id: string): Promise<void> => {
 
 export const saveScan = async (scan: MedicalScan): Promise<void> => {
   if (!db) return;
-  await setDoc(doc(db, "scans", scan.id), {
+  const data = removeUndefined({
     ...scan,
     scanDate: toTimestamp(scan.scanDate),
     createdAt: toTimestamp(scan.createdAt) || Timestamp.now(),
   });
+  await setDoc(doc(db, "scans", scan.id), data);
 };
 
 export const getScans = async (userId?: string): Promise<MedicalScan[]> => {
@@ -230,11 +244,12 @@ export const deleteScan = async (id: string): Promise<void> => {
 
 export const saveLabResult = async (labResult: LabResult): Promise<void> => {
   if (!db) return;
-  await setDoc(doc(db, "labResults", labResult.id), {
+  const data = removeUndefined({
     ...labResult,
     testDate: toTimestamp(labResult.testDate),
     createdAt: toTimestamp(labResult.createdAt) || Timestamp.now(),
   });
+  await setDoc(doc(db, "labResults", labResult.id), data);
 };
 
 export const getLabResults = async (userId?: string): Promise<LabResult[]> => {
@@ -270,10 +285,17 @@ export const deleteLabResult = async (id: string): Promise<void> => {
 
 export const saveProfile = async (profile: PatientProfile): Promise<void> => {
   if (!db) return;
-  await setDoc(doc(db, "profiles", profile.userId), {
-    ...profile,
+  const data = removeUndefined({
+    userId: profile.userId,
+    fullName: profile.fullName,
+    dateOfBirth: profile.dateOfBirth ? toTimestamp(profile.dateOfBirth) : undefined,
+    bloodType: profile.bloodType,
+    allergies: profile.allergies,
+    profilePicture: profile.profilePicture,
+    emergencyContact: profile.emergencyContact,
     updatedAt: toTimestamp(profile.updatedAt) || Timestamp.now(),
   });
+  await setDoc(doc(db, "profiles", profile.userId), data);
 };
 
 export const getProfile = async (userId: string): Promise<PatientProfile | null> => {
@@ -283,6 +305,7 @@ export const getProfile = async (userId: string): Promise<PatientProfile | null>
   const data = profileDoc.data();
   return {
     ...data,
+    dateOfBirth: data.dateOfBirth ? toISOString(data.dateOfBirth) : undefined,
     updatedAt: toISOString(data.updatedAt),
   } as PatientProfile;
 };

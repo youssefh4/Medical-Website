@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [],
+    // Allow Firebase Storage image URLs; add more domains as needed.
+    domains: ["firebasestorage.googleapis.com"],
   },
 };
 

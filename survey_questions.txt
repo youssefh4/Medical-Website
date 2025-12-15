@@ -1,0 +1,20 @@
+Product feedback survey (draft)
+Purpose: Ask recent users if the product is useful and what to improve.
+Instructions: Keep it to <3 minutes. Use a form tool (Google Forms, Typeform, etc.).
+
+1) Your role (pick one): Patient / Caregiver / Clinician / Other
+2) Main goal: What were you hoping to accomplish with this product?
+3) Usefulness (1-5): How useful was it for that goal?
+4) Ease of use (1-5): How easy was it to learn and navigate?
+5) Most valuable feature (pick one): Profile | Conditions | Medications |
+   Scans/Labs | Reminders | Sharing | Community | Other (type)
+6) Least useful or confusing part? (short text)
+7) Top missing feature that would make this indispensable? (short text)
+8) Data trust (1-5): How safe do you feel about how your data is handled?
+9) Would you keep using this weekly? Yes / Maybe / No (why?)
+10) Would you recommend it to someone with a similar need? Yes / Maybe / No
+11) Willingness to pay: Yes (specify monthly/annual) / Maybe / No
+12) Follow-up: Can we contact you? If yes, share your email.
+
+
+

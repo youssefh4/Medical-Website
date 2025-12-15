@@ -14,11 +14,21 @@ export default function ProfileForm({
   onSave,
   onCancel,
 }: ProfileFormProps) {
+  // Helper function to safely convert date to YYYY-MM-DD format
+  const formatDateForInput = (dateValue: string | undefined): string => {
+    if (!dateValue) return "";
+    try {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return ""; // Invalid date
+      return date.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  };
+
   const [formData, setFormData] = useState({
     fullName: profile.fullName || "",
-    dateOfBirth: profile.dateOfBirth
-      ? new Date(profile.dateOfBirth).toISOString().split("T")[0]
-      : "",
+    dateOfBirth: formatDateForInput(profile.dateOfBirth),
     bloodType: profile.bloodType || "",
     allergies: profile.allergies?.join(", ") || "",
     profilePicture: profile.profilePicture || "",
@@ -96,8 +106,8 @@ export default function ProfileForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Profile Picture Upload */}
-      <div className="border-b border-gray-200 pb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-white mb-3">
           Profile Picture
         </label>
         <div className="flex items-center space-x-6">
@@ -131,9 +141,9 @@ export default function ProfileForm({
                 </button>
               </div>
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-gray-300 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 border-4 border-gray-300 dark:border-gray-600 flex items-center justify-center">
                 <svg
-                  className="w-12 h-12 text-gray-400"
+                  className="w-12 h-12 text-gray-400 dark:text-gray-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -175,7 +185,7 @@ export default function ProfileForm({
               onChange={handleImageUpload}
               className="hidden"
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               JPG, PNG or GIF. Max size 5MB.
             </p>
           </div>
@@ -186,7 +196,7 @@ export default function ProfileForm({
         <div>
           <label
             htmlFor="fullName"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-white"
           >
             Full Name *
           </label>
@@ -198,14 +208,14 @@ export default function ProfileForm({
             onChange={(e) =>
               setFormData({ ...formData, fullName: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
         </div>
 
         <div>
           <label
             htmlFor="dateOfBirth"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-white"
           >
             Date of Birth
           </label>
@@ -216,14 +226,14 @@ export default function ProfileForm({
             onChange={(e) =>
               setFormData({ ...formData, dateOfBirth: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
         </div>
 
         <div>
           <label
             htmlFor="bloodType"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-white"
           >
             Blood Type
           </label>
@@ -233,7 +243,7 @@ export default function ProfileForm({
             onChange={(e) =>
               setFormData({ ...formData, bloodType: e.target.value })
             }
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="">Select blood type</option>
             <option value="A+">A+</option>
@@ -250,7 +260,7 @@ export default function ProfileForm({
         <div>
           <label
             htmlFor="allergies"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-white"
           >
             Allergies
           </label>
@@ -262,23 +272,23 @@ export default function ProfileForm({
               setFormData({ ...formData, allergies: e.target.value })
             }
             placeholder="Separate multiple allergies with commas"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Separate multiple allergies with commas (e.g., Peanuts, Shellfish, Penicillin)
           </p>
         </div>
       </div>
 
-      <div className="border-t border-gray-200 pt-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Emergency Contact
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label
               htmlFor="emergencyContactName"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-white"
             >
               Name
             </label>
@@ -292,14 +302,14 @@ export default function ProfileForm({
                   emergencyContactName: e.target.value,
                 })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="emergencyContactPhone"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-white"
             >
               Phone Number
             </label>
@@ -314,14 +324,14 @@ export default function ProfileForm({
                 })
               }
               placeholder="(555) 123-4567"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="emergencyContactRelationship"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-white"
             >
               Relationship
             </label>
@@ -336,7 +346,7 @@ export default function ProfileForm({
                 })
               }
               placeholder="e.g., Spouse, Parent, Sibling"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
         </div>

@@ -25,10 +25,10 @@ export default function MedicationCard({
             <span
               className={`px-2 py-1 text-xs font-semibold rounded-full ${
                 medication.status === "active"
-                  ? "bg-blue-100 text-blue-800"
+                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                   : medication.status === "completed"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
               }`}
             >
               {medication.status}

@@ -5,10 +5,15 @@ import { format } from "date-fns";
 
 interface ScanGalleryProps {
   scans: MedicalScan[];
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
+  readOnly?: boolean;
 }
 
-export default function ScanGallery({ scans, onDelete }: ScanGalleryProps) {
+export default function ScanGallery({
+  scans,
+  onDelete,
+  readOnly = false,
+}: ScanGalleryProps) {
   if (scans.length === 0) {
     return (
       <div className="text-center py-12">
@@ -60,12 +65,14 @@ export default function ScanGallery({ scans, onDelete }: ScanGalleryProps) {
             {scan.notes && (
               <p className="text-sm text-gray-600 mt-2">{scan.notes}</p>
             )}
-            <button
-              onClick={() => onDelete(scan.id)}
-              className="mt-3 text-red-600 hover:text-red-800 text-sm font-medium"
-            >
-              Delete
-            </button>
+            {!readOnly && onDelete && (
+              <button
+                onClick={() => onDelete(scan.id)}
+                className="mt-3 text-red-600 hover:text-red-800 text-sm font-medium"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
       ))}

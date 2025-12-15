@@ -85,7 +85,7 @@ export const saveCondition = async (condition: MedicalCondition): Promise<void> 
   if (useFirebase()) {
     await firebaseService.saveCondition(condition);
   } else {
-    const conditions = getConditions();
+    const conditions = await getConditions();
     const existingIndex = conditions.findIndex((c) => c.id === condition.id);
     if (existingIndex >= 0) {
       conditions[existingIndex] = condition;
@@ -377,7 +377,7 @@ export const saveCommunityMessage = async (message: CommunityMessage): Promise<v
   if (useFirebase()) {
     await firebaseService.saveCommunityMessage(message);
   } else {
-    const messages = getCommunityMessages();
+    const messages = await getCommunityMessages();
     messages.push(message);
     const recentMessages = messages.slice(-1000);
     localStorage.setItem(STORAGE_KEYS.COMMUNITY_MESSAGES, JSON.stringify(recentMessages));
