@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { ShareLink } from "@/types/medical";
-import { getShareLinks, saveShareLink, deleteShareLink } from "@/lib/storage";
+import {
+  getShareLinks,
+  saveShareLink,
+  deleteShareLink,
+  getProfile,
+  getConditions,
+  getMedications,
+  getScans,
+  getLabResults,
+} from "@/lib/storage";
 import { format } from "date-fns";
 
 interface ShareLinkManagerProps {
@@ -126,8 +135,19 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + expirationDays);
 
-    const token = Math.random().toString(36).substring(2, 15) + 
-                  Math.random().toString(36).substring(2, 15);
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+
+    // Take a snapshot of the user's current medical data for sharing
+    const [profile, conditions, medications, scans, labResults] =
+      await Promise.all([
+        getProfile(userId),
+        getConditions(userId),
+        getMedications(userId),
+        getScans(userId),
+        getLabResults(userId),
+      ]);
 
     const newLink: ShareLink = {
       id: Date.now().toString(),
@@ -137,6 +157,11 @@ export default function ShareLinkManager({ userId }: ShareLinkManagerProps) {
       createdAt: new Date().toISOString(),
       isActive: true,
       accessCount: 0,
+      sharedProfile: profile,
+      sharedConditions: conditions,
+      sharedMedications: medications,
+      sharedScans: scans,
+      sharedLabResults: labResults,
     };
 
     await saveShareLink(newLink);

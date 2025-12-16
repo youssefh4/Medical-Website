@@ -1,135 +1,122 @@
-# Medical Profile Website
+## Medical Profile Website
 
-A modern, dynamic web application for patients to store and manage their medical records, including medical conditions and scan images.
+A modern web application for patients to securely manage and share their medical information (conditions, medications, scans, lab results, and more) with healthcare providers.
 
-## Features
+### Core Features
 
-- **User Authentication**: Secure login and registration system
-- **Patient Profile**: Manage personal medical information
-- **Medical Conditions**: Add, edit, and delete medical conditions with status tracking
-- **Medications**: Track medications with dosage, frequency, and prescriber information
-- **Medical Scans**: Upload and view medical scan images (X-Ray, MRI, CT Scan, etc.)
-- **AI Health Assistant**: Chat with an AI assistant about your medical records (optional OpenAI integration)
-- **Modern UI**: Beautiful, responsive design with Tailwind CSS
-- **Local Storage**: Data stored in browser localStorage (simple start, can be upgraded to backend)
+- **Authentication & Profiles**  
+  - Email/password login and registration (Firebase Auth with optional local fallback)  
+  - Rich patient profile: full name, date of birth, blood type, allergies, emergency contact, profile photo
 
-## Technology Stack
+- **Medical Records Management**  
+  - **Conditions**: add/edit/status tracking (active, resolved, chronic)  
+  - **Medications**: dosage, frequency, prescriber, schedules, status (active/completed/discontinued)  
+  - **Scans**: upload and view medical imaging (X‑ray, MRI, CT, etc.)  
+  - **Lab Results**: upload PDFs or images of lab tests with metadata and notes
 
-- **Next.js 14+**: React framework with App Router
-- **TypeScript**: Type-safe development
-- **Tailwind CSS**: Modern, utility-first CSS framework
-- **JWT**: Token-based authentication
-- **date-fns**: Date formatting utilities
+- **Secure Sharing (Read‑Only Links)**  
+  - Generate time‑limited, revocable share links to a **snapshot** of your medical data  
+  - Links are read‑only and designed for doctors/clinics to view without logging in
 
-## Getting Started
+- **Community & AI Assistant**  
+  - Optional community chat with basic moderation rules  
+  - Optional AI health assistant (Gemini/OpenAI) for informational guidance (not medical advice)
 
-### Prerequisites
+- **UI / DX**  
+  - Next.js App Router, TypeScript, Tailwind CSS  
+  - Dark mode support and responsive layout
 
-- Node.js 18+ installed
-- npm or yarn package manager
+### Technology Stack
 
-### Installation
+- **Frontend / Framework**: Next.js 14 (App Router), React 18, TypeScript  
+- **Styling**: Tailwind CSS  
+- **Data & Auth**: Firebase Auth + Firestore (with localStorage fallback for offline/demo)  
+- **Other**: `date-fns` for dates
 
-1. Navigate to the project directory:
-```bash
-cd medical-profile-website
-```
+### Running the Project Locally
 
-2. Install dependencies:
+#### Prerequisites
+
+- Node.js 18+  
+- npm (or yarn/pnpm)
+
+#### 1. Install dependencies
+
 ```bash
 npm install
 ```
 
-3. (Optional) Set up AI Chat with Gemini or OpenAI:
-   - Create a `.env.local` file in the root directory
-   - Add your API key (choose one):
-     - For Gemini: `GEMINI_API_KEY=your_gemini_api_key_here`
-     - For OpenAI: `OPENAI_API_KEY=your_openai_api_key_here`
-   - Gemini API is prioritized if both are provided
-   - Without an API key, the chat will use rule-based responses
+#### 2. Configure environment variables
 
-4. Run the development server:
+Create a `.env.local` file in the project root (or use the provided `env.sample` as a template) and set your Firebase + optional AI keys:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# Optional AI integrations
+GEMINI_API_KEY=your_gemini_api_key
+OPENAI_API_KEY=your_openai_api_key
+```
+
+#### 3. Start the dev server
+
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+Then open `http://localhost:3000`.
 
-### Building for Production
+#### 4. Build for production
 
 ```bash
 npm run build
 npm start
 ```
 
-## Project Structure
+### Deploying to Vercel
 
-```
-medical-profile-website/
-├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes
-│   │   └── chat/          # AI chat API endpoint
-│   ├── login/             # Login page
-│   ├── register/          # Registration page
-│   ├── profile/           # Patient profile page
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Dashboard/home page
-│   └── globals.css        # Global styles
-├── components/            # React components
-│   ├── Navigation.tsx     # Main navigation bar
-│   ├── ProtectedRoute.tsx # Route protection wrapper
-│   ├── AIChat.tsx         # AI chat widget component
-│   ├── MedicalRecordCard.tsx
-│   ├── ConditionForm.tsx
-│   ├── MedicationForm.tsx
-│   ├── MedicationCard.tsx
-│   ├── ScanGallery.tsx
-│   └── UploadScan.tsx
-├── lib/                   # Utility functions
-│   ├── auth.ts           # Authentication logic
-│   └── storage.ts        # LocalStorage management
-├── types/                 # TypeScript type definitions
-│   └── medical.ts
-└── public/               # Static assets
+- Connect the GitHub repo to Vercel and let it detect **Next.js** automatically.  
+- In Vercel **Project → Settings → Environment Variables**, add the same Firebase and AI keys as above.  
+- Redeploy after any env var changes so Next.js can pick them up.
+
+### Project Structure (High Level)
+
+```text
+app/                # App Router routes
+  api/chat/         # AI chat API endpoint
+  login/            # Login page
+  register/         # Registration page
+  profile/          # Patient profile & records
+  share/[token]/    # Read-only shared view of records
+  community/        # Community chat
+components/         # UI components (forms, cards, galleries, navigation, etc.)
+lib/                # Firebase setup, auth helpers, storage abstraction
+types/medical.ts    # Core domain models (User, Condition, Medication, Scan, LabResult, ShareLink, etc.)
 ```
 
-## Usage
+### Usage Overview
 
-1. **Register/Login**: Create an account or sign in with existing credentials
-2. **Dashboard**: View overview of your medical records
-3. **Profile**: 
-   - View and manage personal information (including allergies and emergency contacts)
-   - Add/edit/delete medical conditions
-   - Track medications with dosage and frequency
-   - Upload and view medical scan images
-4. **AI Chat**: Click the chat button (bottom right) to ask questions about your medical records
+1. **Create an account / login**  
+2. **Complete your profile** with personal info, allergies, and emergency contact  
+3. **Add records**: conditions, medications, scans, and lab results  
+4. **Generate a share link** from the Profile page to share a read‑only snapshot with a doctor  
+5. (Optional) **Enable AI chat** by adding an API key for richer explanations
 
-## Security Note
+### Security & Privacy
 
-⚠️ **Important**: This application uses localStorage for data storage and simple JWT authentication. For production use with real medical data, you should:
+This project is designed as a **demo/educational** app:
 
-- Implement a proper backend with database
-- Use secure password hashing and verification
-- Implement proper HIPAA compliance measures
-- Use secure cloud storage for medical images
-- Add proper encryption for sensitive data
+- Data is stored in Firebase and/or browser localStorage depending on configuration.  
+- No HIPAA or equivalent compliance is guaranteed.  
+- For real patients and production use you **must** add:
+  - A hardened backend and stricter access controls  
+  - Proper encryption at rest and in transit  
+  - Auditing, logging, and regulatory compliance checks
 
-## AI Chat Feature
-
-The website includes an AI health assistant that can:
-- Answer questions about your medical conditions
-- Provide information about your medications
-- Help you understand your medical scans
-- Answer general health questions (with appropriate disclaimers)
-
-**Setup Options:**
-1. **With Gemini API** (Recommended): Add `GEMINI_API_KEY` to `.env.local` for advanced AI responses using Google's Gemini
-2. **With OpenAI API**: Add `OPENAI_API_KEY` to `.env.local` for advanced AI responses using OpenAI's GPT models
-3. **Without API Key**: The chat will use rule-based responses based on your medical data
-
-**Note**: The AI assistant provides informational assistance only and cannot replace professional medical advice.
-
-## License
-
-This project is for educational/demonstration purposes.
+Use this codebase as a learning tool or prototype, not as a final production medical system.
 

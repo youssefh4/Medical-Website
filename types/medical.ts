@@ -85,6 +85,12 @@ export interface ShareLink {
   isActive: boolean;
   accessCount: number;
   lastAccessedAt?: string;
+  // Snapshot data for read-only sharing (so viewers don't need auth)
+  sharedProfile?: PatientProfile | null;
+  sharedConditions?: MedicalCondition[];
+  sharedMedications?: Medication[];
+  sharedScans?: MedicalScan[];
+  sharedLabResults?: LabResult[];
 }
 
 export interface CommunityMessage {

@@ -347,7 +347,10 @@ export const getShareLinks = async (userId?: string, includeExpired: boolean = f
       .filter((link) => {
         if (!includeExpired) {
           const expiresAt = new Date(link.expiresAt);
-          return expiresAt > now && link.isActive;
+          // Treat missing isActive as active for backwards compatibility
+          const isActive =
+            typeof link.isActive === "boolean" ? link.isActive : true;
+          return expiresAt > now && isActive;
         }
         return true;
       });
@@ -381,7 +384,8 @@ export const getShareLinkByToken = async (token: string): Promise<ShareLink | nu
   } as ShareLink;
 
   // Check if active and not expired
-  if (!link.isActive) return null;
+  // Treat missing isActive as active for backwards compatibility
+  if (link.isActive === false) return null;
   const expiresAt = new Date(link.expiresAt);
   const now = new Date();
   if (expiresAt.getTime() <= now.getTime()) return null;

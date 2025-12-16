@@ -2,19 +2,37 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { MedicalCondition, Medication, MedicalScan, PatientProfile } from "@/types/medical";
+import {
+  MedicalCondition,
+  Medication,
+  MedicalScan,
+  PatientProfile,
+  ShareLink,
+  LabResult,
+} from "@/types/medical";
 import { format } from "date-fns";
 import ScanGallery from "@/components/ScanGallery";
-import { getShareLinkByToken, incrementShareLinkAccess, getProfile, getConditions, getMedications, getScans } from "@/lib/storage";
+import LabResultGallery from "@/components/LabResultGallery";
+import {
+  getShareLinkByToken,
+  incrementShareLinkAccess,
+  getProfile,
+  getConditions,
+  getMedications,
+  getScans,
+  getLabResults,
+} from "@/lib/storage";
 
 export default function SharePage() {
   const params = useParams();
   const token = params.token as string;
+  const [shareLink, setShareLink] = useState<ShareLink | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [conditions, setConditions] = useState<MedicalCondition[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [scans, setScans] = useState<MedicalScan[]>([]);
+  const [labResults, setLabResults] = useState<LabResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,12 +49,12 @@ export default function SharePage() {
       }
 
       // Get share link by token
-      const shareLink = await getShareLinkByToken(token);
-      
+      const link = await getShareLinkByToken(token);
+
       console.log("Token:", token);
-      console.log("Share link found:", shareLink);
-      
-      if (!shareLink) {
+      console.log("Share link found:", link);
+
+      if (!link) {
         console.error("Share link not found.");
         setError("This share link is invalid or has expired. Please request a new link from the patient.");
         setLoading(false);
@@ -46,21 +64,47 @@ export default function SharePage() {
       // Increment access count
       await incrementShareLinkAccess(token);
 
-      // Get user's medical data from storage
-      const userId = shareLink.userId;
-      const [profileData, conditionsData, medicationsData, scansData] = await Promise.all([
-        getProfile(userId),
-        getConditions(userId),
-        getMedications(userId),
-        getScans(userId),
-      ]);
+      // Prefer snapshot data stored on the share link so viewers don't need auth
+      if (
+        link.sharedProfile ||
+        link.sharedConditions ||
+        link.sharedMedications ||
+        link.sharedScans ||
+        link.sharedLabResults
+      ) {
+        setShareLink(link);
+        setExpiresAt(link.expiresAt);
+        setProfile(link.sharedProfile || null);
+        setConditions(link.sharedConditions || []);
+        setMedications(link.sharedMedications || []);
+        setScans(link.sharedScans || []);
+        setLabResults(link.sharedLabResults || []);
+      } else {
+        // Backwards compatibility: fall back to live data if snapshot not present
+        const userId = link.userId;
+        const [
+          profileData,
+          conditionsData,
+          medicationsData,
+          scansData,
+          labResultsData,
+        ] =
+          await Promise.all([
+            getProfile(userId),
+            getConditions(userId),
+            getMedications(userId),
+            getScans(userId),
+            getLabResults(userId),
+          ]);
 
-      // Set the data
-      setExpiresAt(shareLink.expiresAt);
-      setProfile(profileData);
-      setConditions(conditionsData);
-      setMedications(medicationsData);
-      setScans(scansData);
+        setShareLink(link);
+        setExpiresAt(link.expiresAt);
+        setProfile(profileData);
+        setConditions(conditionsData);
+        setMedications(medicationsData);
+        setScans(scansData);
+        setLabResults(labResultsData);
+      }
       setLoading(false);
     } catch (err) {
       console.error("Error loading share data:", err);
@@ -363,7 +407,7 @@ export default function SharePage() {
           </div>
 
           {/* Medical Scans */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-white shadow rounded-lg mb-6">
             <div className="px-4 py-5 sm:p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Medical Scans
@@ -373,6 +417,16 @@ export default function SharePage() {
               ) : (
                 <ScanGallery scans={scans} readOnly={true} />
               )}
+            </div>
+          </div>
+
+          {/* Lab Results */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Lab Results
+              </h2>
+              <LabResultGallery labResults={labResults} readOnly={true} />
             </div>
           </div>
 
